@@ -1,0 +1,60 @@
+import express from 'express';
+import cors from 'cors';
+import authRoutes from './routes/auth.js';
+import qrRoutes from './routes/qr.js';
+import { resolveBaseUrl } from './ip.js';
+import { getQR, trialDaysLeft } from './db.js';
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+app.use('/auth', authRoutes);
+app.use('/qr', qrRoutes);
+
+app.get('/paywall/:id', (req, res) => {
+  const id = req.params.id;
+  const qr = getQR(id);
+  const base = resolveBaseUrl();
+  if(!qr) return res.status(404).send('QR not found');
+  const html = `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upgrade to Pro</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#f6f8fb;margin:0;color:#111}
+.card{max-width:700px;margin:40px auto;background:#fff;border-radius:14px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.08)}
+h1{margin-top:0}.btn{display:inline-block;background:#0b5fff;color:#fff;text-decoration:none;padding:12px 16px;border-radius:10px;border:1px solid #cfd7ff}
+small{color:#667085}
+</style>
+</head><body>
+<div class="card">
+  <h1>This QR is inactive</h1>
+  <p>The trial for <b>${qr.owner}</b> has ended. Upgrade to Pro to reactivate this code.</p>
+  <p><a class="btn" href="${base}/upgrade?email=${encodeURIComponent(qr.owner)}">Upgrade now</a></p>
+  <small>If you believe this is an error, contact the code owner.</small>
+</div>
+</body></html>`;
+  res.setHeader('Content-Type','text/html'); res.send(html);
+});
+
+app.get('/upgrade', (req, res) => {
+  const email = req.query.email || '';
+  const base = resolveBaseUrl();
+  const html = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upgrade</title>
+<style>body{font-family:system-ui;background:#f6f8fb;margin:0;color:#111}.card{max-width:680px;margin:40px auto;background:#fff;border-radius:14px;padding:28px;box-shadow:0 10px 30px rgba(15,23,42,.08)} .btn{display:inline-block;background:#0b5fff;color:#fff;text-decoration:none;padding:12px 16px;border-radius:10px;border:1px solid #cfd7ff}</style>
+</head><body>
+<div class="card"><h1>Upgrade to Pro</h1>
+<p>Demo page: clicking the button will upgrade <b>${email}</b> instantly.</p>
+<form method="post" action="${base}/auth/upgrade" onsubmit="event.preventDefault();fetch('${base}/auth/upgrade',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:'${email}'})}).then(()=>location.href='${base}')">
+  <button class="btn" type="submit">Upgrade (demo)</button>
+</form>
+<p><small>In production, replace this with a Stripe Checkout session + webhook.</small></p>
+</div></body></html>`;
+  res.setHeader('Content-Type','text/html'); res.send(html);
+});
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () => {
+  console.log(`Backend running on ${resolveBaseUrl()}`);
+});

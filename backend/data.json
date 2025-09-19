@@ -1,0 +1,32 @@
+{
+  "users": {
+    "test@pro.com": {
+      "password": "test1234",
+      "isPro": true,
+      "trialEnds": null
+    },
+    "vas.veronika5@gmail.com": {
+      "password": "tereza",
+      "isPro": false,
+      "trialEnds": 100
+    }
+  },
+  "qrs": {
+    "mfqyrpcdulvaud": {
+      "owner": "test@pro.com",
+      "target": "https://facebook.com",
+      "scanCount": 2,
+      "blockedCount": 0,
+      "createdAt": 1758293865229,
+      "lastScanAt": 1758293967678
+    },
+    "mfqyxseokwxvo2": {
+      "owner": "vas.veronika5@gmail.com",
+      "target": "https://example.com",
+      "scanCount": 1,
+      "blockedCount": 1,
+      "createdAt": 1758294149136,
+      "lastScanAt": 1758294246694
+    }
+  }
+}
