@@ -3,30 +3,26 @@
     "test@pro.com": {
       "password": "test1234",
       "isPro": true,
-      "trialEnds": null
+      "trialEnds": null,
+      "stripeCustomerId": null,
+      "stripeSubId": null
     },
     "vas.veronika5@gmail.com": {
       "password": "tereza",
       "isPro": false,
-      "trialEnds": 100
+      "trialEnds": 1758908020792,
+      "stripeCustomerId": null,
+      "stripeSubId": null
     }
   },
   "qrs": {
-    "mfqyrpcdulvaud": {
+    "mfr4bobqwccotl": {
       "owner": "test@pro.com",
-      "target": "https://facebook.com",
-      "scanCount": 2,
-      "blockedCount": 0,
-      "createdAt": 1758293865229,
-      "lastScanAt": 1758293967678
-    },
-    "mfqyxseokwxvo2": {
-      "owner": "vas.veronika5@gmail.com",
-      "target": "https://example.com",
+      "target": "https://example.comtrretrtertert",
       "scanCount": 1,
-      "blockedCount": 1,
-      "createdAt": 1758294149136,
-      "lastScanAt": 1758294246694
+      "blockedCount": 0,
+      "createdAt": 1758303195110,
+      "lastScanAt": 1759170846970
     }
   }
 }

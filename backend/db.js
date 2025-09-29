@@ -11,7 +11,7 @@ const days = n => 1000 * 60 * 60 * 24 * n;
 
 const defaultData = {
   users: {
-    "test@pro.com": { password: "test1234", isPro: true, trialEnds: null }
+    "test@pro.com": { password: "test1234", isPro: true, trialEnds: null, stripeCustomerId: null, stripeSubId: null }
   },
   qrs: {}
 };
@@ -35,12 +35,18 @@ export function getUser(email){ return state.users[email] || null; }
 export function addUser(email, password){
   if(state.users[email]) return false;
   const trialEnds = now() + days(7);
-  state.users[email] = { password, isPro:false, trialEnds };
+  state.users[email] = { password, isPro:false, trialEnds, stripeCustomerId:null, stripeSubId:null };
   save(); return true;
 }
 export function setPro(email, val=true){
   const u = state.users[email]; if(!u) return false;
   u.isPro = !!val; if(val) u.trialEnds = null; save(); return true;
+}
+export function linkStripe(email, customerId, subId){
+  const u = state.users[email]; if(!u) return false;
+  if(customerId) u.stripeCustomerId = customerId;
+  if(subId) u.stripeSubId = subId;
+  save(); return true;
 }
 export function trialActive(email){
   const u = state.users[email]; if(!u) return false;

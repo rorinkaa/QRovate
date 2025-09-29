@@ -19,6 +19,7 @@ router.post('/register', (req, res) => {
   return res.json({ user: { email, is_pro: false, trial_days_left: 7 } });
 });
 
+// demo fallback (kept)
 router.post('/upgrade', (req, res) => {
   const { email } = req.body || {};
   if(!email) return res.status(400).json({ error: 'email required' });
