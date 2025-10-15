@@ -81,3 +81,11 @@ export function recordScan(id, ok=true){
   else { qr.blockedCount=(qr.blockedCount||0)+1; }
   save();
 }
+
+export function setPasswordHash(email, passwordHash) {
+  if (!state.users[email]) return false;
+  state.users[email].passwordHash = passwordHash;
+  delete state.users[email].password;
+  save();
+  return true;
+}

@@ -1,3 +1,18 @@
+import jwt from 'jsonwebtoken';
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
+function ensureAuth(req, res, next) {
+  const hdr = req.headers.authorization || '';
+  const [, token] = hdr.split(' ');
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    req.user = { email: payload.sub };
+    return next();
+  } catch {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+}
+
+
 import express from 'express';
 import QRCode from 'qrcode';
 import { resolveBaseUrl } from '../ip.js';
@@ -102,6 +117,19 @@ router.get('/svg/:id', async (req, res) => {
     const svg = await QRCode.toString(link, { type: 'svg', errorCorrectionLevel: 'M' });
     res.setHeader('Content-Type', 'image/svg+xml'); res.send(svg);
   }catch(e){ res.status(500).send('Error generating QR SVG'); }
+});
+
+router.get('/list', ensureAuth, (req, res) => res.json(listQR(req.user.email)));
+router.post('/create', ensureAuth, (req, res) => {
+  const { target } = req.body || {};
+  const item = createQR(req.user.email, target);
+  res.json(item);
+});
+router.post('/update', ensureAuth, (req, res) => {
+  const { id, target } = req.body || {};
+  const updated = updateQR(id, req.user.email, target);
+  if (!updated) return res.status(404).json({ error: 'QR not found' });
+  res.json(updated);
 });
 
 export default router;
