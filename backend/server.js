@@ -16,7 +16,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false
 }));
 
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://qrovate-fe.vercel.app';
 app.use(cors({ origin: FRONTEND_URL, credentials: true }));
 
 // Rate limits
