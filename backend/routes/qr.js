@@ -111,12 +111,19 @@ router.get('/stats/:id', (req, res) => {
 router.get('/svg/:id', async (req, res) => {
   const id = req.params.id;
   const qr = getQR(id);
-  if(!qr) return res.status(404).send('Not found');
-  try{
+  if (!qr) return res.status(404).send('Not found');
+  try {
     const link = `${BASE}/qr/${id}`;
     const svg = await QRCode.toString(link, { type: 'svg', errorCorrectionLevel: 'M' });
-    res.setHeader('Content-Type', 'image/svg+xml'); res.send(svg);
-  }catch(e){ res.status(500).send('Error generating QR SVG'); }
+    
+    // ✅ Add these two lines before sending the SVG:
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    res.setHeader('Content-Type', 'image/svg+xml');
+    
+    res.send(svg);
+  } catch (e) {
+    res.status(500).send('Error generating QR SVG');
+  }
 });
 
 router.get('/list', ensureAuth, (req, res) => res.json(listQR(req.user.email)));

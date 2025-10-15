@@ -13,7 +13,9 @@ const app = express();
 app.disable('x-powered-by');
 app.use(helmet({
   contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
+  crossOriginEmbedderPolicy: false,
+  crossOriginResourcePolicy: { policy: "cross-origin" } // <-- add this
+
 }));
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://qrovate-fe.vercel.app';
