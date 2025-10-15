@@ -11,68 +11,79 @@ const days = n => 1000 * 60 * 60 * 24 * n;
 
 const defaultData = {
   users: {
-    "test@pro.com": { password: "test1234", isPro: true, trialEnds: null, stripeCustomerId: null, stripeSubId: null }
+    "test@pro.com": { passwordHash: null, isPro: true, trialEnds: null, stripeCustomerId: null, stripeSubId: null }
   },
   qrs: {}
 };
 
-function load() {
-  if (!fs.existsSync(dataFile)) {
+let state = defaultData;
+try{
+  if(fs.existsSync(dataFile)){
+    state = JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
+  }else{
     fs.writeFileSync(dataFile, JSON.stringify(defaultData, null, 2));
-    return JSON.parse(JSON.stringify(defaultData));
   }
-  try { return JSON.parse(fs.readFileSync(dataFile, 'utf-8')); }
-  catch (e) {
-    fs.writeFileSync(dataFile, JSON.stringify(defaultData, null, 2));
-    return JSON.parse(JSON.stringify(defaultData));
-  }
+}catch(e){
+  console.error('DB init error', e);
 }
 
-let state = load();
-function save(){ fs.writeFileSync(dataFile, JSON.stringify(state, null, 2)); }
+function save(){
+  fs.writeFileSync(dataFile, JSON.stringify(state, null, 2));
+}
 
 export function getUser(email){ return state.users[email] || null; }
-export function addUser(email, password){
+export function addUser(email, _password, passwordHash){
   if(state.users[email]) return false;
-  const trialEnds = now() + days(7);
-  state.users[email] = { password, isPro:false, trialEnds, stripeCustomerId:null, stripeSubId:null };
+  state.users[email] = { passwordHash: passwordHash || null, isPro:false, trialEnds: now()+days(7), stripeCustomerId:null, stripeSubId:null };
   save(); return true;
 }
-export function setPro(email, val=true){
-  const u = state.users[email]; if(!u) return false;
-  u.isPro = !!val; if(val) u.trialEnds = null; save(); return true;
+export function setPasswordHash(email, passwordHash){
+  if(!state.users[email]) return false;
+  state.users[email].passwordHash = passwordHash;
+  delete state.users[email].password;
+  save(); return true;
+}
+export function setPro(email, isPro=true){
+  if(!state.users[email]) return false;
+  state.users[email].isPro = !!isPro; save(); return true;
 }
 export function linkStripe(email, customerId, subId){
-  const u = state.users[email]; if(!u) return false;
-  if(customerId) u.stripeCustomerId = customerId;
-  if(subId) u.stripeSubId = subId;
+  if(!state.users[email]) return false;
+  state.users[email].stripeCustomerId = customerId;
+  state.users[email].stripeSubId = subId;
   save(); return true;
-}
-export function trialActive(email){
-  const u = state.users[email]; if(!u) return false;
-  if(u.isPro) return true;
-  return typeof u.trialEnds==='number' && now() <= u.trialEnds;
 }
 export function trialDaysLeft(email){
   const u = state.users[email]; if(!u) return 0;
-  if(u.isPro || u.trialEnds==null) return 0;
-  const ms = u.trialEnds - now();
-  return Math.max(0, Math.ceil(ms/(1000*60*60*24)));
+  if(u.isPro) return 0;
+  if(!u.trialEnds) return 0;
+  return Math.max(0, Math.ceil((u.trialEnds - now())/days(1)));
 }
+export function trialActive(email){ return trialDaysLeft(email) > 0 || (state.users[email] && state.users[email].isPro); }
 
 export function listQR(owner){
-  return Object.entries(state.qrs)
-    .filter(([id,qr]) => qr.owner===owner)
-    .map(([id,qr]) => ({ id, owner:qr.owner, target:qr.target, scanCount:qr.scanCount||0, blockedCount:qr.blockedCount||0, createdAt:qr.createdAt, lastScanAt:qr.lastScanAt||null }));
+  const out = [];
+  for(const [id, qr] of Object.entries(state.qrs)){
+    if(qr.owner === owner){
+      out.push({ id, owner: qr.owner, target: qr.target, scanCount: qr.scanCount||0, blockedCount: qr.blockedCount||0 });
+    }
+  }
+  return out;
 }
 export function getQR(id){ return state.qrs[id] || null; }
 export function createQR(owner, target){
+  if(!owner) throw new Error('owner required');
+  if(!target) throw new Error('target required');
+  const isUrl = /^https?:\/\//i.test(target);
+  if(!isUrl) throw new Error('target must be a valid http(s) URL');
   const id = (Date.now().toString(36)+Math.random().toString(36).slice(2,8));
   state.qrs[id] = { owner, target, scanCount:0, blockedCount:0, createdAt: now(), lastScanAt:null };
   save(); return { id, owner, target, scanCount:0, blockedCount:0 };
 }
 export function updateQR(id, owner, target){
   const qr = state.qrs[id]; if(!qr) return null; if(qr.owner!==owner) return false;
+  const isUrl = /^https?:\/\//i.test(target);
+  if(!isUrl) throw new Error('target must be a valid http(s) URL');
   qr.target = target; save(); return { id, owner, target, scanCount: qr.scanCount, blockedCount: qr.blockedCount };
 }
 export function recordScan(id, ok=true){
