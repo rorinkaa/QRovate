@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -11,9 +12,18 @@ const days = n => 1000 * 60 * 60 * 24 * n;
 
 const defaultData = {
   users: {
-    "test@pro.com": { password: "test1234", isPro: true, trialEnds: null, stripeCustomerId: null, stripeSubId: null }
+    "test@pro.com": {
+      password: "test1234",
+      isPro: true,
+      trialEnds: null,
+      stripeCustomerId: null,
+      stripeSubId: null,
+      emailVerified: true
+    }
   },
-  qrs: {}
+  qrs: {},
+  verificationTokens: {},
+  resetTokens: {}
 };
 
 function load() {
@@ -29,13 +39,27 @@ function load() {
 }
 
 let state = load();
+if (!state.verificationTokens) state.verificationTokens = {};
+if (!state.resetTokens) state.resetTokens = {};
 function save(){ fs.writeFileSync(dataFile, JSON.stringify(state, null, 2)); }
 
+const generateToken = () => crypto.randomBytes(32).toString('hex');
+const VERIFICATION_TTL = days(2);
+const RESET_TTL = days(1);
+
 export function getUser(email){ return state.users[email] || null; }
-export function addUser(email, password){
+export function addUser(email, password, passwordHash){
   if(state.users[email]) return false;
   const trialEnds = now() + days(7);
-  state.users[email] = { password, isPro:false, trialEnds, stripeCustomerId:null, stripeSubId:null };
+  state.users[email] = {
+    password: password || null,
+    passwordHash: passwordHash || null,
+    isPro:false,
+    trialEnds,
+    stripeCustomerId:null,
+    stripeSubId:null,
+    emailVerified:false
+  };
   save(); return true;
 }
 export function setPro(email, val=true){
@@ -136,4 +160,51 @@ export function setPasswordHash(email, passwordHash) {
   delete state.users[email].password;
   save();
   return true;
+}
+
+export function setEmailVerified(email, val = true) {
+  const u = state.users[email]; if (!u) return false;
+  u.emailVerified = !!val;
+  save();
+  return true;
+}
+
+export function createVerificationToken(email) {
+  const u = state.users[email]; if (!u) return null;
+  for (const [key, record] of Object.entries(state.verificationTokens)) {
+    if (record.email === email) delete state.verificationTokens[key];
+  }
+  const token = generateToken();
+  state.verificationTokens[token] = { email, expiresAt: now() + VERIFICATION_TTL };
+  save();
+  return token;
+}
+
+export function consumeVerificationToken(token) {
+  const record = state.verificationTokens[token];
+  if (!record) return null;
+  delete state.verificationTokens[token];
+  save();
+  if (record.expiresAt && record.expiresAt < now()) return null;
+  return record.email;
+}
+
+export function createResetToken(email) {
+  const u = state.users[email]; if (!u) return null;
+  for (const [key, record] of Object.entries(state.resetTokens)) {
+    if (record.email === email) delete state.resetTokens[key];
+  }
+  const token = generateToken();
+  state.resetTokens[token] = { email, expiresAt: now() + RESET_TTL };
+  save();
+  return token;
+}
+
+export function consumeResetToken(token) {
+  const record = state.resetTokens[token];
+  if (!record) return null;
+  delete state.resetTokens[token];
+  save();
+  if (record.expiresAt && record.expiresAt < now()) return null;
+  return record.email;
 }
