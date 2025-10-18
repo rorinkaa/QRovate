@@ -66,6 +66,7 @@ export function listQR(owner){
     .map(([id,qr]) => ({
       id,
       owner: qr.owner,
+      name: qr.name || 'Untitled QR',
       target: qr.target,
       style: qr.style || null,
       scanCount: qr.scanCount || 0,
@@ -75,10 +76,11 @@ export function listQR(owner){
     }));
 }
 export function getQR(id){ return state.qrs[id] || null; }
-export function createQR(owner, target, style = null){
-  const id = (Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+export function createQR(owner, target, style = null, name = 'Untitled QR') {
+  const id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
   state.qrs[id] = {
     owner,
+    name,
     target,
     style: style || null,
     scanCount: 0,
@@ -89,10 +91,14 @@ export function createQR(owner, target, style = null){
   };
   logEvent(state.qrs[id], { type: 'create' });
   save();
-  return { id, owner, target, style: style || null, scanCount:0, blockedCount:0 };
+  return { id, owner, name, target, style: style || null, scanCount: 0, blockedCount: 0 };
 }
-export function updateQR(id, owner, target, style){
+
+export function updateQR(id, owner, target, style, name){
   const qr = state.qrs[id]; if(!qr) return null; if(qr.owner!==owner) return false;
+  if (typeof name === 'string' && name.trim()) {
+    qr.name = name.trim();
+  }
   qr.target = target;
   if (style !== undefined) {
     qr.style = style || null;
@@ -101,7 +107,7 @@ export function updateQR(id, owner, target, style){
   }
   logEvent(qr, { type: 'update' });
   save();
-  return { id, owner, target: qr.target, style: qr.style || null, scanCount: qr.scanCount, blockedCount: qr.blockedCount };
+  return { id, owner, name: qr.name || 'Untitled QR', target: qr.target, style: qr.style || null, scanCount: qr.scanCount, blockedCount: qr.blockedCount };
 }
 export function recordScan(id, ok=true){
   const qr = state.qrs[id]; if(!qr) return;

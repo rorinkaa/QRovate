@@ -75,14 +75,14 @@ router.get('/list', ensureAuth, (req, res) => {
 /** Create a dynamic QR (legacy: accepts {target}) */
 router.post('/create', ensureAuth, (req, res) => {
   try {
-    let { target, style } = req.body || {};
+    let { target, style, name } = req.body || {};
     if (typeof target !== 'string') target = '';
     // normalize plain domains for URL use-cases
     if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(target)) {
       target = normalizeUrl(target);
     }
     const safeStyle = sanitizeStyle(style);
-    const item = createQR(req.user.email, target, safeStyle);
+    const item = createQR(req.user.email, target, safeStyle, typeof name === 'string' && name.trim() ? name.trim() : 'Untitled QR');
     res.json(item);
   } catch (e) {
     res.status(500).json({ error: 'Failed to create' });
@@ -113,14 +113,14 @@ router.post('/instant-svg', ensureAuth, async (req, res) => {
 /** Update the target for an existing id */
 router.post('/update', ensureAuth, (req, res) => {
   try {
-    let { id, target, style } = req.body || {};
+    let { id, target, style, name } = req.body || {};
     if (!id) return res.status(400).json({ error: 'Missing id' });
     if (typeof target !== 'string') target = '';
     if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(target)) {
       target = normalizeUrl(target);
     }
     const safeStyle = sanitizeStyle(style);
-    const updated = updateQR(id, req.user.email, target, safeStyle);
+    const updated = updateQR(id, req.user.email, target, safeStyle, name);
     if (!updated) return res.status(404).json({ error: 'QR not found' });
     res.json(updated);
   } catch (e) {
