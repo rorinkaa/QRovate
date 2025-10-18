@@ -7,7 +7,8 @@ import {
   updateQR,
   getQR,
   listQR,
-  recordScan
+  recordScan,
+  getEvents
 } from '../db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
@@ -117,6 +118,14 @@ router.get('/stats/:id', ensureAuth, (req, res) => {
     lastScanAt: qr.lastScanAt || null,
     createdAt: qr.createdAt || null
   });
+});
+
+/** Activity history (auth) */
+router.get('/history/:id', ensureAuth, (req, res) => {
+  const qr = getQR(req.params.id);
+  if (!qr || qr.owner !== req.user.email) return res.status(404).json({ error: 'QR not found' });
+  const events = getEvents(req.params.id);
+  res.json({ events });
 });
 
 /** Public: redirect by id (counts scans) */

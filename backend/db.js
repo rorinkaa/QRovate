@@ -77,8 +77,19 @@ export function listQR(owner){
 export function getQR(id){ return state.qrs[id] || null; }
 export function createQR(owner, target, style = null){
   const id = (Date.now().toString(36)+Math.random().toString(36).slice(2,8));
-  state.qrs[id] = { owner, target, style: style || null, scanCount:0, blockedCount:0, createdAt: now(), lastScanAt:null };
-  save(); return { id, owner, target, style: style || null, scanCount:0, blockedCount:0 };
+  state.qrs[id] = {
+    owner,
+    target,
+    style: style || null,
+    scanCount: 0,
+    blockedCount: 0,
+    createdAt: now(),
+    lastScanAt: null,
+    events: []
+  };
+  logEvent(state.qrs[id], { type: 'create' });
+  save();
+  return { id, owner, target, style: style || null, scanCount:0, blockedCount:0 };
 }
 export function updateQR(id, owner, target, style){
   const qr = state.qrs[id]; if(!qr) return null; if(qr.owner!==owner) return false;
@@ -88,6 +99,7 @@ export function updateQR(id, owner, target, style){
   } else if (qr.style === undefined) {
     qr.style = null;
   }
+  logEvent(qr, { type: 'update' });
   save();
   return { id, owner, target: qr.target, style: qr.style || null, scanCount: qr.scanCount, blockedCount: qr.blockedCount };
 }
@@ -95,7 +107,21 @@ export function recordScan(id, ok=true){
   const qr = state.qrs[id]; if(!qr) return;
   if(ok){ qr.scanCount=(qr.scanCount||0)+1; qr.lastScanAt=now(); }
   else { qr.blockedCount=(qr.blockedCount||0)+1; }
+  logEvent(qr, { type: 'scan', ok: !!ok });
   save();
+}
+
+function logEvent(qr, event){
+  if(!qr) return;
+  if(!Array.isArray(qr.events)) qr.events = [];
+  qr.events.push({ ...event, ts: now() });
+  if(qr.events.length > 120) qr.events = qr.events.slice(-120);
+}
+
+export function getEvents(id){
+  const qr = getQR(id);
+  if(!qr) return [];
+  return Array.isArray(qr.events) ? [...qr.events] : [];
 }
 
 export function setPasswordHash(email, passwordHash) {
