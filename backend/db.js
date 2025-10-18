@@ -63,17 +63,33 @@ export function trialDaysLeft(email){
 export function listQR(owner){
   return Object.entries(state.qrs)
     .filter(([id,qr]) => qr.owner===owner)
-    .map(([id,qr]) => ({ id, owner:qr.owner, target:qr.target, scanCount:qr.scanCount||0, blockedCount:qr.blockedCount||0, createdAt:qr.createdAt, lastScanAt:qr.lastScanAt||null }));
+    .map(([id,qr]) => ({
+      id,
+      owner: qr.owner,
+      target: qr.target,
+      style: qr.style || null,
+      scanCount: qr.scanCount || 0,
+      blockedCount: qr.blockedCount || 0,
+      createdAt: qr.createdAt,
+      lastScanAt: qr.lastScanAt || null
+    }));
 }
 export function getQR(id){ return state.qrs[id] || null; }
-export function createQR(owner, target){
+export function createQR(owner, target, style = null){
   const id = (Date.now().toString(36)+Math.random().toString(36).slice(2,8));
-  state.qrs[id] = { owner, target, scanCount:0, blockedCount:0, createdAt: now(), lastScanAt:null };
-  save(); return { id, owner, target, scanCount:0, blockedCount:0 };
+  state.qrs[id] = { owner, target, style: style || null, scanCount:0, blockedCount:0, createdAt: now(), lastScanAt:null };
+  save(); return { id, owner, target, style: style || null, scanCount:0, blockedCount:0 };
 }
-export function updateQR(id, owner, target){
+export function updateQR(id, owner, target, style){
   const qr = state.qrs[id]; if(!qr) return null; if(qr.owner!==owner) return false;
-  qr.target = target; save(); return { id, owner, target, scanCount: qr.scanCount, blockedCount: qr.blockedCount };
+  qr.target = target;
+  if (style !== undefined) {
+    qr.style = style || null;
+  } else if (qr.style === undefined) {
+    qr.style = null;
+  }
+  save();
+  return { id, owner, target: qr.target, style: qr.style || null, scanCount: qr.scanCount, blockedCount: qr.blockedCount };
 }
 export function recordScan(id, ok=true){
   const qr = state.qrs[id]; if(!qr) return;

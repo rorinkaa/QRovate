@@ -32,6 +32,35 @@ function normalizeUrl(u) {
   return /^https?:\/\//i.test(u) ? u : `https://${u}`;
 }
 
+function sanitizeStyle(style) {
+  if (!style || typeof style !== 'object') return null;
+  const allowedSchema = {
+    size: 'number',
+    colorMode: 'string',
+    foreground: 'string',
+    foregroundSecondary: 'string',
+    gradientAngle: 'number',
+    background: 'string',
+    frameStyle: 'string',
+    frameColor: 'string',
+    frameText: 'string',
+    frameTextColor: 'string',
+    logoSizeRatio: 'number',
+    logoDataUrl: 'string'
+  };
+  const result = {};
+  for (const [key, type] of Object.entries(allowedSchema)) {
+    if (!(key in style)) continue;
+    const value = style[key];
+    if (type === 'string' && typeof value === 'string') {
+      result[key] = key === 'logoDataUrl' ? value.slice(0, 200000) : value.slice(0, 256);
+    } else if (type === 'number' && typeof value === 'number' && Number.isFinite(value)) {
+      result[key] = value;
+    }
+  }
+  return Object.keys(result).length ? result : null;
+}
+
 /** List my dynamic QRs */
 router.get('/list', ensureAuth, (req, res) => {
   try {
@@ -45,13 +74,14 @@ router.get('/list', ensureAuth, (req, res) => {
 /** Create a dynamic QR (legacy: accepts {target}) */
 router.post('/create', ensureAuth, (req, res) => {
   try {
-    let { target } = req.body || {};
+    let { target, style } = req.body || {};
     if (typeof target !== 'string') target = '';
     // normalize plain domains for URL use-cases
     if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(target)) {
       target = normalizeUrl(target);
     }
-    const item = createQR(req.user.email, target);
+    const safeStyle = sanitizeStyle(style);
+    const item = createQR(req.user.email, target, safeStyle);
     res.json(item);
   } catch (e) {
     res.status(500).json({ error: 'Failed to create' });
@@ -61,13 +91,14 @@ router.post('/create', ensureAuth, (req, res) => {
 /** Update the target for an existing id */
 router.post('/update', ensureAuth, (req, res) => {
   try {
-    let { id, target } = req.body || {};
+    let { id, target, style } = req.body || {};
     if (!id) return res.status(400).json({ error: 'Missing id' });
     if (typeof target !== 'string') target = '';
     if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(target)) {
       target = normalizeUrl(target);
     }
-    const updated = updateQR(id, req.user.email, target);
+    const safeStyle = sanitizeStyle(style);
+    const updated = updateQR(id, req.user.email, target, safeStyle);
     if (!updated) return res.status(404).json({ error: 'QR not found' });
     res.json(updated);
   } catch (e) {
