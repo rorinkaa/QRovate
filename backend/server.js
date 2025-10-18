@@ -19,7 +19,23 @@ app.use(helmet({
 }));
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://qrovate-fe.vercel.app';
-app.use(cors({ origin: FRONTEND_URL, credentials: true }));
+const EXTRA_ORIGINS = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
+  : ['http://localhost:5173', 'http://localhost:4173'];
+const ALLOWED_ORIGINS = Array.from(new Set([FRONTEND_URL, ...EXTRA_ORIGINS]));
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
+  credentials: true
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 
 // Rate limits
 const limiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 300 });
