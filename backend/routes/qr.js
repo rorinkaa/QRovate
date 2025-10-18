@@ -89,6 +89,27 @@ router.post('/create', ensureAuth, (req, res) => {
   }
 });
 
+/** Auth: generate SVG for instant generator */
+router.post('/instant-svg', ensureAuth, async (req, res) => {
+  try {
+    let { text, size = 256, foreground = '#000000', background = '#ffffff' } = req.body || {};
+    if (typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({ error: 'Text is required' });
+    }
+    size = Math.max(128, Math.min(1024, Number(size) || 256));
+    const svg = await QRCode.toString(text, {
+      type: 'svg',
+      errorCorrectionLevel: 'H',
+      margin: 1,
+      color: { dark: foreground || '#000', light: background || '#fff' },
+      width: size
+    });
+    res.json({ svg });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to render SVG' });
+  }
+});
+
 /** Update the target for an existing id */
 router.post('/update', ensureAuth, (req, res) => {
   try {
