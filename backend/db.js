@@ -14,7 +14,7 @@ const defaultData = {
   users: {
     "test@pro.com": {
       password: "test1234",
-      isPro: true,
+      isPro: false,
       trialEnds: null,
       stripeCustomerId: null,
       stripeSubId: null,
@@ -22,18 +22,50 @@ const defaultData = {
     }
   },
   qrs: {},
+  staticDesigns: {},
   verificationTokens: {},
   resetTokens: {}
 };
 
 function load() {
+  // If there's no data file, create one from defaults
   if (!fs.existsSync(dataFile)) {
-    fs.writeFileSync(dataFile, JSON.stringify(defaultData, null, 2));
+    try {
+      fs.writeFileSync(dataFile, JSON.stringify(defaultData, null, 2));
+    } catch (e) {
+      console.error('Failed to create data file:', e);
+    }
     return JSON.parse(JSON.stringify(defaultData));
   }
-  try { return JSON.parse(fs.readFileSync(dataFile, 'utf-8')); }
-  catch (e) {
-    fs.writeFileSync(dataFile, JSON.stringify(defaultData, null, 2));
+
+  // Try to read the primary data file. If it fails (corruption, partial write),
+  // attempt to recover from a backup file. If that also fails, fall back to defaults.
+  try {
+    return JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
+  } catch (e) {
+    const bak = dataFile + '.bak';
+    try {
+      if (fs.existsSync(bak)) {
+        const recovered = JSON.parse(fs.readFileSync(bak, 'utf-8'));
+        // restore recovered to primary file for next runs
+        try { fs.writeFileSync(dataFile, JSON.stringify(recovered, null, 2)); } catch (err) { /* ignore */ }
+        console.warn('Data file corrupted; recovered from backup.');
+        return recovered;
+      }
+    } catch (err) {
+      console.error('Failed to recover DB from backup:', err);
+    }
+    // No backup available. Rename the corrupted file for diagnostics and
+    // return defaults in memory (do NOT overwrite the corrupted file). The
+    // next successful save will create a fresh data file and keep backups.
+    try {
+      const ts = Date.now();
+      const corruptName = `${dataFile}.corrupt.${ts}`;
+      fs.renameSync(dataFile, corruptName);
+      console.warn(`Data file corrupted; renamed to ${corruptName} for investigation.`);
+    } catch (err) {
+      console.error('Failed to preserve corrupted data file:', err);
+    }
     return JSON.parse(JSON.stringify(defaultData));
   }
 }
@@ -41,7 +73,24 @@ function load() {
 let state = load();
 if (!state.verificationTokens) state.verificationTokens = {};
 if (!state.resetTokens) state.resetTokens = {};
-function save(){ fs.writeFileSync(dataFile, JSON.stringify(state, null, 2)); }
+function save(){
+  // Atomic save: write to a temp file, rotate a backup, then rename into place.
+  const tmp = dataFile + '.tmp';
+  const bak = dataFile + '.bak';
+  try {
+    fs.writeFileSync(tmp, JSON.stringify(state, null, 2));
+    // keep a backup of the previous good file
+    try {
+      if (fs.existsSync(dataFile)) fs.copyFileSync(dataFile, bak);
+    } catch (e) {
+      // non-fatal
+    }
+    fs.renameSync(tmp, dataFile);
+  } catch (e) {
+    console.error('Failed to save DB:', e);
+    try { if (fs.existsSync(tmp)) fs.unlinkSync(tmp); } catch(_){}
+  }
+}
 
 const generateToken = () => crypto.randomBytes(32).toString('hex');
 const VERIFICATION_TTL = days(2);
@@ -99,6 +148,28 @@ export function listQR(owner){
       lastScanAt: qr.lastScanAt || null
     }));
 }
+export function listStaticDesigns(owner){
+  return Object.entries(state.staticDesigns || {})
+    .filter(([id,rec]) => rec.owner === owner)
+    .map(([id,rec]) => ({ id, ...rec }));
+}
+
+export function createStaticDesign(owner, design){
+  const id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  if (!state.staticDesigns) state.staticDesigns = {};
+  state.staticDesigns[id] = { owner, ...design, createdAt: now() };
+  save();
+  return { id, ...state.staticDesigns[id] };
+}
+
+export function deleteStaticDesign(id, owner){
+  const rec = state.staticDesigns && state.staticDesigns[id];
+  if (!rec) return false;
+  if (rec.owner !== owner) return false;
+  delete state.staticDesigns[id];
+  save();
+  return true;
+}
 export function getQR(id){ return state.qrs[id] || null; }
 export function createQR(owner, target, style = null, name = 'Untitled QR') {
   const id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
@@ -139,6 +210,25 @@ export function recordScan(id, ok=true){
   else { qr.blockedCount=(qr.blockedCount||0)+1; }
   logEvent(qr, { type: 'scan', ok: !!ok });
   save();
+}
+
+export function deleteQR(id, owner){
+  const qr = state.qrs[id]; if(!qr) return false; if(qr.owner!==owner) return false;
+  delete state.qrs[id];
+  save();
+  return true;
+}
+
+export function updateUserProfile(email, updates = {}){
+  const u = state.users[email]; if(!u) return false;
+  // allow changing only non-sensitive profile fields here
+  const allowed = ['emailVerified'];
+  for(const key of allowed){
+    if(key in updates) u[key] = updates[key];
+  }
+  // future: support displayName, avatar, metadata
+  save();
+  return true;
 }
 
 function logEvent(qr, event){

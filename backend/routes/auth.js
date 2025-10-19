@@ -12,6 +12,7 @@ import {
   consumeVerificationToken,
   createResetToken,
   consumeResetToken
+  , updateUserProfile
 } from '../db.js';
 
 const router = express.Router();
@@ -118,7 +119,7 @@ router.post('/register', async (req, res) => {
   const hash = bcrypt.hashSync(password, 12);
   const ok = addUser(email, undefined, hash);
   if (!ok) return res.status(400).json({ error: 'User exists' });
-  if (plan === 'pro') setPro(email, true);
+  // By default users are free accounts. 'pro' upgrade flows are handled separately.
 
   const verifyToken = createVerificationToken(email);
   if (verifyToken) logDevLink('verify', email, verifyToken);
@@ -128,6 +129,27 @@ router.post('/register', async (req, res) => {
     user: { ...responseUser(email), email_verified: false },
     dev_verification_url: process.env.NODE_ENV === 'production' ? undefined : `${FRONTEND_URL}/?verify=${verifyToken}`
   });
+});
+
+// Get my profile (requires auth)
+router.get('/profile', async (req, res) => {
+  const authed = authEmailFromRequest(req);
+  if (!authed) return res.status(401).json({ error: 'Unauthorized' });
+  const user = getUser(authed);
+  if (!user) return res.status(404).json({ error: 'Not found' });
+  res.json({ email: authed, is_pro: !!user.isPro, trial_days_left: trialDaysLeft(authed), email_verified: !!user.emailVerified });
+});
+
+// Update simple profile fields (non-sensitive)
+router.post('/profile', async (req, res) => {
+  const authed = authEmailFromRequest(req);
+  if (!authed) return res.status(401).json({ error: 'Unauthorized' });
+  const { emailVerified } = req.body || {};
+  const updates = {};
+  if (typeof emailVerified === 'boolean') updates.emailVerified = emailVerified;
+  const ok = updateUserProfile ? updateUserProfile(authed, updates) : false;
+  if (!ok) return res.status(400).json({ error: 'Failed to update' });
+  res.json({ ok: true });
 });
 
 router.post('/upgrade', (req, res) => {

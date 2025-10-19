@@ -9,6 +9,10 @@ import {
   listQR,
   recordScan,
   getEvents
+  , deleteQR
+  , listStaticDesigns
+  , createStaticDesign
+  , deleteStaticDesign
 } from '../db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
@@ -83,6 +87,7 @@ router.post('/create', ensureAuth, (req, res) => {
     }
     const safeStyle = sanitizeStyle(style);
     const item = createQR(req.user.email, target, safeStyle, typeof name === 'string' && name.trim() ? name.trim() : 'Untitled QR');
+    console.info(`[qr:create] owner=${req.user.email} id=${item.id}`);
     res.json(item);
   } catch (e) {
     res.status(500).json({ error: 'Failed to create' });
@@ -121,10 +126,57 @@ router.post('/update', ensureAuth, (req, res) => {
     }
     const safeStyle = sanitizeStyle(style);
     const updated = updateQR(id, req.user.email, target, safeStyle, name);
+    if (updated) console.info(`[qr:update] owner=${req.user.email} id=${id}`);
     if (!updated) return res.status(404).json({ error: 'QR not found' });
     res.json(updated);
   } catch (e) {
     res.status(500).json({ error: 'Failed to update' });
+  }
+});
+
+/** Delete a QR (auth) */
+router.post('/delete', ensureAuth, (req, res) => {
+  try {
+    const { id } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'Missing id' });
+    const ok = deleteQR(id, req.user.email);
+    if (!ok) return res.status(404).json({ error: 'QR not found or not owned' });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to delete' });
+  }
+});
+
+/** Static designs: list/create/delete (per-user) */
+router.get('/static/list', ensureAuth, (req, res) => {
+  try {
+    const rows = listStaticDesigns(req.user.email);
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to list static designs' });
+  }
+});
+
+router.post('/static/create', ensureAuth, (req, res) => {
+  try {
+    const { name, template, values, style, payload } = req.body || {};
+    if (!name) return res.status(400).json({ error: 'Missing name' });
+    const rec = createStaticDesign(req.user.email, { name, template, values, style, payload });
+    res.json(rec);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to create static design' });
+  }
+});
+
+router.post('/static/delete', ensureAuth, (req, res) => {
+  try {
+    const { id } = req.body || {};
+    if (!id) return res.status(400).json({ error: 'Missing id' });
+    const ok = deleteStaticDesign(id, req.user.email);
+    if (!ok) return res.status(404).json({ error: 'Static design not found or not owned' });
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to delete static design' });
   }
 });
 
