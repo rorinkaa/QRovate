@@ -4,6 +4,7 @@ import QRCode from 'qrcode';
 import { resolveBaseUrl } from '../ip.js';
 import {
   createQR,
+  createGuestQR,
   updateQR,
   getQR,
   listQR,
@@ -17,6 +18,24 @@ import {
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
 const router = express.Router();
+
+// Simple in-memory rate limiter for guest creation: 5 per hour per IP
+const GUEST_LIMIT_WINDOW_MS = 1000 * 60 * 60; // 1 hour
+const GUEST_LIMIT_MAX = 5;
+const guestRateMap = new Map(); // ip -> [timestamps]
+
+function checkGuestRate(ip){
+  try{
+    const now = Date.now();
+    const arr = guestRateMap.get(ip) || [];
+    // keep only timestamps within window
+    const pruned = arr.filter(ts => ts > now - GUEST_LIMIT_WINDOW_MS);
+    if (pruned.length >= GUEST_LIMIT_MAX) return false;
+    pruned.push(now);
+    guestRateMap.set(ip, pruned);
+    return true;
+  }catch(e){ return false; }
+}
 
 /** Simple bearer auth for API routes */
 function ensureAuth(req, res, next) {
@@ -91,6 +110,26 @@ router.post('/create', ensureAuth, (req, res) => {
     res.json(item);
   } catch (e) {
     res.status(500).json({ error: 'Failed to create' });
+  }
+});
+
+/** Create a guest QR (no auth required) - returns claim token */
+router.post('/create-guest', (req, res) => {
+  try {
+    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+    if (!checkGuestRate(ip)) return res.status(429).json({ error: 'Rate limit exceeded' });
+    let { target, style, name } = req.body || {};
+    if (typeof target !== 'string') target = '';
+    // normalize plain domains for URL use-cases
+    if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(target)) {
+      target = normalizeUrl(target);
+    }
+    const safeStyle = sanitizeStyle(style);
+    const item = createGuestQR(target, safeStyle, typeof name === 'string' && name.trim() ? name.trim() : 'Untitled QR');
+    console.info(`[qr:create-guest] id=${item.id}`);
+    res.json(item);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to create guest QR' });
   }
 });
 

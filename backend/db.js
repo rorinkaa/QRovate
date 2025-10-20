@@ -10,6 +10,10 @@ const dataFile = path.join(__dirname, 'data.json');
 const now = () => Date.now();
 const days = n => 1000 * 60 * 60 * 24 * n;
 
+function normalizeEmail(e){
+  return (e || '').toString().trim().toLowerCase();
+}
+
 const defaultData = {
   users: {
     "test@pro.com": {
@@ -73,6 +77,19 @@ function load() {
 let state = load();
 if (!state.verificationTokens) state.verificationTokens = {};
 if (!state.resetTokens) state.resetTokens = {};
+// Normalize user keys (migration) so lookups are case/whitespace-insensitive.
+if (state.users && Object.keys(state.users).length) {
+  const migrated = {};
+  for (const [raw, rec] of Object.entries(state.users)) {
+    const norm = normalizeEmail(raw);
+    if (!migrated[norm]) migrated[norm] = rec;
+    else {
+      // If duplicate normalized keys exist, prefer the first one but keep fields merged
+      migrated[norm] = { ...rec, ...migrated[norm] };
+    }
+  }
+  state.users = migrated;
+}
 function save(){
   // Atomic save: write to a temp file, rotate a backup, then rename into place.
   const tmp = dataFile + '.tmp';
@@ -95,12 +112,14 @@ function save(){
 const generateToken = () => crypto.randomBytes(32).toString('hex');
 const VERIFICATION_TTL = days(2);
 const RESET_TTL = days(1);
+const GUEST_TTL = days(14); // guest QR expiration
 
-export function getUser(email){ return state.users[email] || null; }
+export function getUser(email){ return state.users[normalizeEmail(email)] || null; }
 export function addUser(email, password, passwordHash){
-  if(state.users[email]) return false;
+  const norm = normalizeEmail(email);
+  if(state.users[norm]) return false;
   const trialEnds = now() + days(7);
-  state.users[email] = {
+  state.users[norm] = {
     password: password || null,
     passwordHash: passwordHash || null,
     isPro:false,
@@ -112,30 +131,31 @@ export function addUser(email, password, passwordHash){
   save(); return true;
 }
 export function setPro(email, val=true){
-  const u = state.users[email]; if(!u) return false;
+  const u = state.users[normalizeEmail(email)]; if(!u) return false;
   u.isPro = !!val; if(val) u.trialEnds = null; save(); return true;
 }
 export function linkStripe(email, customerId, subId){
-  const u = state.users[email]; if(!u) return false;
+  const u = state.users[normalizeEmail(email)]; if(!u) return false;
   if(customerId) u.stripeCustomerId = customerId;
   if(subId) u.stripeSubId = subId;
   save(); return true;
 }
 export function trialActive(email){
-  const u = state.users[email]; if(!u) return false;
+  const u = state.users[normalizeEmail(email)]; if(!u) return false;
   if(u.isPro) return true;
   return typeof u.trialEnds==='number' && now() <= u.trialEnds;
 }
 export function trialDaysLeft(email){
-  const u = state.users[email]; if(!u) return 0;
+  const u = state.users[normalizeEmail(email)]; if(!u) return 0;
   if(u.isPro || u.trialEnds==null) return 0;
   const ms = u.trialEnds - now();
   return Math.max(0, Math.ceil(ms/(1000*60*60*24)));
 }
 
 export function listQR(owner){
+  const norm = normalizeEmail(owner);
   return Object.entries(state.qrs)
-    .filter(([id,qr]) => qr.owner===owner)
+    .filter(([id,qr]) => normalizeEmail(qr.owner)===norm)
     .map(([id,qr]) => ({
       id,
       owner: qr.owner,
@@ -149,15 +169,17 @@ export function listQR(owner){
     }));
 }
 export function listStaticDesigns(owner){
+  const norm = normalizeEmail(owner);
   return Object.entries(state.staticDesigns || {})
-    .filter(([id,rec]) => rec.owner === owner)
+    .filter(([id,rec]) => normalizeEmail(rec.owner) === norm)
     .map(([id,rec]) => ({ id, ...rec }));
 }
 
 export function createStaticDesign(owner, design){
   const id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  const normOwner = normalizeEmail(owner);
   if (!state.staticDesigns) state.staticDesigns = {};
-  state.staticDesigns[id] = { owner, ...design, createdAt: now() };
+  state.staticDesigns[id] = { owner: normOwner, ...design, createdAt: now() };
   save();
   return { id, ...state.staticDesigns[id] };
 }
@@ -173,8 +195,9 @@ export function deleteStaticDesign(id, owner){
 export function getQR(id){ return state.qrs[id] || null; }
 export function createQR(owner, target, style = null, name = 'Untitled QR') {
   const id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  const normOwner = normalizeEmail(owner);
   state.qrs[id] = {
-    owner,
+    owner: normOwner,
     name,
     target,
     style: style || null,
@@ -187,6 +210,54 @@ export function createQR(owner, target, style = null, name = 'Untitled QR') {
   logEvent(state.qrs[id], { type: 'create' });
   save();
   return { id, owner, name, target, style: style || null, scanCount: 0, blockedCount: 0 };
+}
+
+export function createGuestQR(target, style = null, name = 'Untitled QR'){
+  const id = (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  const token = generateToken();
+  const expiresAt = now() + GUEST_TTL;
+  if (!state.qrs) state.qrs = {};
+  state.qrs[id] = {
+    owner: null,
+    guestToken: token,
+    guestExpiresAt: expiresAt,
+    name,
+    target,
+    style: style || null,
+    scanCount: 0,
+    blockedCount: 0,
+    createdAt: now(),
+    lastScanAt: null,
+    events: []
+  };
+  logEvent(state.qrs[id], { type: 'create', guest: true });
+  save();
+  return { id, claimToken: token, expiresAt, name, target, style: style || null };
+}
+
+export function listGuestByToken(token){
+  if(!token) return [];
+  const nowTs = now();
+  return Object.entries(state.qrs)
+    .filter(([id,qr]) => qr.guestToken === token && (!qr.guestExpiresAt || qr.guestExpiresAt > nowTs))
+    .map(([id,qr]) => ({ id, owner: qr.owner, name: qr.name || 'Untitled QR', target: qr.target, style: qr.style || null, createdAt: qr.createdAt }));
+}
+
+export function claimGuestQRs(token, email){
+  if(!token) return 0;
+  const norm = normalizeEmail(email);
+  let count = 0;
+  const nowTs = now();
+  for(const [id, qr] of Object.entries(state.qrs || {})){
+    if(qr.guestToken === token && (!qr.guestExpiresAt || qr.guestExpiresAt > nowTs)){
+      qr.owner = norm;
+      delete qr.guestToken;
+      delete qr.guestExpiresAt;
+      count++;
+    }
+  }
+  if(count) save();
+  return count;
 }
 
 export function updateQR(id, owner, target, style, name){
@@ -213,14 +284,14 @@ export function recordScan(id, ok=true){
 }
 
 export function deleteQR(id, owner){
-  const qr = state.qrs[id]; if(!qr) return false; if(qr.owner!==owner) return false;
+  const qr = state.qrs[id]; if(!qr) return false; if(qr.owner!==normalizeEmail(owner)) return false;
   delete state.qrs[id];
   save();
   return true;
 }
 
 export function updateUserProfile(email, updates = {}){
-  const u = state.users[email]; if(!u) return false;
+  const u = state.users[normalizeEmail(email)]; if(!u) return false;
   // allow changing only non-sensitive profile fields here
   const allowed = ['emailVerified'];
   for(const key of allowed){
@@ -245,27 +316,29 @@ export function getEvents(id){
 }
 
 export function setPasswordHash(email, passwordHash) {
-  if (!state.users[email]) return false;
-  state.users[email].passwordHash = passwordHash;
-  delete state.users[email].password;
+  const norm = normalizeEmail(email);
+  if (!state.users[norm]) return false;
+  state.users[norm].passwordHash = passwordHash;
+  delete state.users[norm].password;
   save();
   return true;
 }
 
 export function setEmailVerified(email, val = true) {
-  const u = state.users[email]; if (!u) return false;
+  const u = state.users[normalizeEmail(email)]; if (!u) return false;
   u.emailVerified = !!val;
   save();
   return true;
 }
 
 export function createVerificationToken(email) {
-  const u = state.users[email]; if (!u) return null;
+  const norm = normalizeEmail(email);
+  const u = state.users[norm]; if (!u) return null;
   for (const [key, record] of Object.entries(state.verificationTokens)) {
-    if (record.email === email) delete state.verificationTokens[key];
+    if (normalizeEmail(record.email) === norm) delete state.verificationTokens[key];
   }
   const token = generateToken();
-  state.verificationTokens[token] = { email, expiresAt: now() + VERIFICATION_TTL };
+  state.verificationTokens[token] = { email: norm, expiresAt: now() + VERIFICATION_TTL };
   save();
   return token;
 }
@@ -276,16 +349,17 @@ export function consumeVerificationToken(token) {
   delete state.verificationTokens[token];
   save();
   if (record.expiresAt && record.expiresAt < now()) return null;
-  return record.email;
+  return normalizeEmail(record.email);
 }
 
 export function createResetToken(email) {
-  const u = state.users[email]; if (!u) return null;
+  const norm = normalizeEmail(email);
+  const u = state.users[norm]; if (!u) return null;
   for (const [key, record] of Object.entries(state.resetTokens)) {
-    if (record.email === email) delete state.resetTokens[key];
+    if (normalizeEmail(record.email) === norm) delete state.resetTokens[key];
   }
   const token = generateToken();
-  state.resetTokens[token] = { email, expiresAt: now() + RESET_TTL };
+  state.resetTokens[token] = { email: norm, expiresAt: now() + RESET_TTL };
   save();
   return token;
 }
@@ -296,5 +370,5 @@ export function consumeResetToken(token) {
   delete state.resetTokens[token];
   save();
   if (record.expiresAt && record.expiresAt < now()) return null;
-  return record.email;
+  return normalizeEmail(record.email);
 }

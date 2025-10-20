@@ -1,0 +1,28 @@
+{
+  "users": {
+    "test@pro.com": {
+      "password": "test1234",
+      "isPro": true,
+      "trialEnds": null,
+      "stripeCustomerId": null,
+      "stripeSubId": null
+    },
+    "vas.veronika5@gmail.com": {
+      "password": "tereza",
+      "isPro": false,
+      "trialEnds": 1758908020792,
+      "stripeCustomerId": null,
+      "stripeSubId": null
+    }
+  },
+  "qrs": {
+    "mfr4bobqwccotl": {
+      "owner": "test@pro.com",
+      "target": "https://example.comtrretrtertert",
+      "scanCount": 1,
+      "blockedCount": 0,
+      "createdAt": 1758303195110,
+      "lastScanAt": 1759170846970
+    }
+  }
+}

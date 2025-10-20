@@ -20,18 +20,24 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET || '';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
+function normalizeEmail(e){
+  return (e || '').toString().trim().toLowerCase();
+}
+
 function responseUser(email) {
-  const profile = getUser(email);
+  const norm = normalizeEmail(email);
+  const profile = getUser(norm);
   return {
-    email,
+    email: norm,
     is_pro: !!profile?.isPro,
-    trial_days_left: trialDaysLeft(email),
+    trial_days_left: trialDaysLeft(norm),
     email_verified: !!profile?.emailVerified
   };
 }
 
 function signToken(email) {
-  return jwt.sign({ sub: email }, JWT_SECRET, { expiresIn: '7d' });
+  const norm = normalizeEmail(email);
+  return jwt.sign({ sub: norm }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 async function verifyCaptcha(token) {
@@ -60,7 +66,7 @@ function authEmailFromRequest(req) {
   const token = header.slice(7);
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    return decoded?.sub || null;
+    return normalizeEmail(decoded?.sub || null);
   } catch {
     return null;
   }
@@ -84,12 +90,12 @@ function logDevLink(type, email, token) {
 
 router.post('/login', async (req, res) => {
   const { email, password, captchaToken } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
+  const normEmail = normalizeEmail(email);
+  if (!normEmail || !password) return res.status(400).json({ error: 'Missing fields' });
   if (!await ensureCaptcha(req, captchaToken)) {
     return res.status(400).json({ error: 'Captcha validation failed', code: 'BAD_CAPTCHA' });
   }
-
-  const u = getUser(email);
+  const u = getUser(normEmail);
   if (!u) return res.status(401).json({ error: 'Invalid credentials' });
 
   // migrate plain password if exists
@@ -101,32 +107,33 @@ router.post('/login', async (req, res) => {
   if (!u.passwordHash || !bcrypt.compareSync(password, u.passwordHash))
     return res.status(401).json({ error: 'Invalid credentials' });
 
-  const token = signToken(email);
+  const token = signToken(normEmail);
   const needsVerification = !u.emailVerified;
   res.json({
     token,
-    user: { ...responseUser(email), needs_verification: needsVerification }
+    user: { ...responseUser(normEmail), needs_verification: needsVerification }
   });
 });
 
 router.post('/register', async (req, res) => {
   const { email, password, captchaToken, plan } = req.body || {};
-  if (!email || !password) return res.status(400).json({ error: 'Missing fields' });
+  const normEmail = normalizeEmail(email);
+  if (!normEmail || !password) return res.status(400).json({ error: 'Missing fields' });
   if (!await ensureCaptcha(req, captchaToken)) {
     return res.status(400).json({ error: 'Captcha validation failed', code: 'BAD_CAPTCHA' });
   }
 
   const hash = bcrypt.hashSync(password, 12);
-  const ok = addUser(email, undefined, hash);
+  const ok = addUser(normEmail, undefined, hash);
   if (!ok) return res.status(400).json({ error: 'User exists' });
   // By default users are free accounts. 'pro' upgrade flows are handled separately.
 
-  const verifyToken = createVerificationToken(email);
-  if (verifyToken) logDevLink('verify', email, verifyToken);
+  const verifyToken = createVerificationToken(normEmail);
+  if (verifyToken) logDevLink('verify', normEmail, verifyToken);
 
   res.status(201).json({
     requires_verification: true,
-    user: { ...responseUser(email), email_verified: false },
+    user: { ...responseUser(normEmail), email_verified: false },
     dev_verification_url: process.env.NODE_ENV === 'production' ? undefined : `${FRONTEND_URL}/?verify=${verifyToken}`
   });
 });
@@ -162,7 +169,8 @@ router.post('/upgrade', (req, res) => {
 
 router.post('/resend-verification', async (req, res) => {
   const { email, captchaToken } = req.body || {};
-  const targetEmail = email || authEmailFromRequest(req);
+  const rawTarget = email || authEmailFromRequest(req);
+  const targetEmail = normalizeEmail(rawTarget);
   if (!targetEmail) return res.status(400).json({ error: 'Email required' });
 
   if (!await ensureCaptcha(req, captchaToken, { allowAuthBypass: true })) {
@@ -188,16 +196,30 @@ router.post('/verify', (req, res) => {
   res.json({ ok: true, email });
 });
 
+router.post('/claim', async (req, res) => {
+  const authed = authEmailFromRequest(req);
+  if (!authed) return res.status(401).json({ error: 'Unauthorized' });
+  const { token } = req.body || {};
+  if (!token) return res.status(400).json({ error: 'Missing token' });
+  try {
+    const claimed = claimGuestQRs(token, authed);
+    res.json({ ok: true, claimed });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to claim' });
+  }
+});
+
 router.post('/password/forgot', async (req, res) => {
   const { email, captchaToken } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'Email required' });
+  const normEmail = normalizeEmail(email);
+  if (!normEmail) return res.status(400).json({ error: 'Email required' });
   if (!await ensureCaptcha(req, captchaToken)) {
     return res.status(400).json({ error: 'Captcha validation failed', code: 'BAD_CAPTCHA' });
   }
-  const user = getUser(email);
+  const user = getUser(normEmail);
   if (!user) return res.json({ ok: true });
-  const token = createResetToken(email);
-  if (token) logDevLink('reset', email, token);
+  const token = createResetToken(normEmail);
+  if (token) logDevLink('reset', normEmail, token);
   res.json({ ok: true });
 });
 

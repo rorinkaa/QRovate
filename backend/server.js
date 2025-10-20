@@ -21,7 +21,7 @@ app.use(helmet({
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://qrovate-fe.vercel.app';
 const EXTRA_ORIGINS = process.env.CORS_ORIGINS
   ? process.env.CORS_ORIGINS.split(',').map(s => s.trim()).filter(Boolean)
-  : ['http://localhost:5173', 'http://localhost:4173'];
+  : ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:5174'];
 const ALLOWED_ORIGINS = Array.from(new Set([FRONTEND_URL, ...EXTRA_ORIGINS]));
 
 const corsOptions = {
@@ -56,6 +56,6 @@ app.use('/billing', billingRoutes);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Backend running on ${resolveBaseUrl()}`);
+app.listen(PORT, 'localhost', () => {
+  console.log(`Backend running on http://localhost:${PORT}`);
 });
