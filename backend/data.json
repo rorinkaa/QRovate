@@ -92,6 +92,34 @@
           "ts": 1760973874499
         }
       ]
+    },
+    "mgzeoqhb81qduc": {
+      "owner": "12345@test.com",
+      "name": "New dynamic QR",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 0,
+      "createdAt": 1760981112335,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1760981112335
+        }
+      ]
     }
   },
   "verificationTokens": {
