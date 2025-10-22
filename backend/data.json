@@ -8,11 +8,12 @@
       "passwordHash": "$2b$12$Njc8VGONiAJBc1H7q9di0ekEDbOVd1kTtQ7lDPH9HQWLZSnaA62GC"
     },
     "vas.veronika5@gmail.com": {
-      "password": "tereza",
       "isPro": false,
       "trialEnds": 1758908020792,
       "stripeCustomerId": null,
-      "stripeSubId": null
+      "stripeSubId": null,
+      "passwordHash": "$2b$12$Sk86314DLaApT4SQpSHCNuHfYb3tZyJDrj3aNigD1DLHUih78n1sm",
+      "emailVerified": true
     },
     "12345@test.com": {
       "password": null,
@@ -148,6 +149,98 @@
           "ts": 1761021120454
         }
       ]
+    },
+    "mh2gr62h6k1zj2": {
+      "owner": "test@pro.com",
+      "name": "test 22/10",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "label",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 0,
+      "createdAt": 1761165983609,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761165983609
+        },
+        {
+          "type": "update",
+          "ts": 1761165987575
+        }
+      ]
+    },
+    "mh2gu5pmlklggd": {
+      "owner": "vas.veronika5@gmail.com",
+      "name": "test 22-10",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 0,
+      "createdAt": 1761166123114,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761166123114
+        },
+        {
+          "type": "update",
+          "ts": 1761166153648
+        }
+      ]
+    },
+    "mh2gv304pipohy": {
+      "owner": "vas.veronika5@gmail.com",
+      "name": "New dynamic QR",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 0,
+      "createdAt": 1761166166260,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761166166260
+        }
+      ]
     }
   },
   "verificationTokens": {
@@ -156,7 +249,16 @@
       "expiresAt": 1761123201216
     }
   },
-  "resetTokens": {},
+  "resetTokens": {
+    "1f74b3f5b784cf40350fc7074bb81f493469a9ee142d2c186ecb1da6ba1cfc2c": {
+      "email": "test@pro.com",
+      "expiresAt": 1761254628901
+    },
+    "5e7ebc8a911d2267fcd435613b6f70cc22528d9a3fec741277dc6c04a73589a2": {
+      "email": "vas.veronika5@gmail.com",
+      "expiresAt": 1761254830786
+    }
+  },
   "staticDesigns": {
     "mgywbnn448r7xh": {
       "owner": "test@pro.com",
@@ -214,6 +316,52 @@
       },
       "payload": "https://drgdrgr",
       "createdAt": 1760973831571
+    },
+    "mh2gpv6j3mc8gp": {
+      "owner": "test@pro.com",
+      "name": "New static QR",
+      "template": "URL",
+      "values": {
+        "url": "ewewe"
+      },
+      "style": {
+        "size": 320,
+        "background": "#F8FAFC",
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "payload": "https://ewewe",
+      "createdAt": 1761165922843
+    },
+    "mh2grpnyv8lkn2": {
+      "owner": "test@pro.com",
+      "name": "test 22/10",
+      "template": "TEXT",
+      "values": {
+        "text": "rwerewew"
+      },
+      "style": {
+        "size": 320,
+        "background": "#F8FAFC",
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "payload": "rwerewew",
+      "createdAt": 1761166009006
     }
   }
 }
