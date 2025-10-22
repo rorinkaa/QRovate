@@ -250,13 +250,13 @@
     }
   },
   "resetTokens": {
-    "dd3e7e125276c744d8d1406ff356288279eabfd5cc4cf793514648c8f814e579": {
+    "5e7ebc8a911d2267fcd435613b6f70cc22528d9a3fec741277dc6c04a73589a2": {
       "email": "vas.veronika5@gmail.com",
-      "expiresAt": 1761253304655
+      "expiresAt": 1761254830786
     },
-    "1f74b3f5b784cf40350fc7074bb81f493469a9ee142d2c186ecb1da6ba1cfc2c": {
+    "1ab698308f4c58430ded9c5d032454772eafbf92a05673fc94e4e67da5aa40c8": {
       "email": "test@pro.com",
-      "expiresAt": 1761254628901
+      "expiresAt": 1761255235598
     }
   },
   "staticDesigns": {
