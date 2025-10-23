@@ -21,6 +21,10 @@ function getTransporter() {
         user: SMTP_USER,
         pass: SMTP_PASS,
       } : undefined,
+      // Add timeout and connection settings
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000, // 10 seconds
+      socketTimeout: 30000, // 30 seconds
     });
   }
   return transporter;
@@ -43,6 +47,16 @@ export async function sendEmail(to, subject, html) {
     return true;
   } catch (error) {
     console.error('Email send error:', error);
+
+    // In production, if SMTP fails, we might want to log the email content for manual sending
+    if (process.env.NODE_ENV === 'production') {
+      console.log('PRODUCTION EMAIL FAILURE - Email details:', {
+        to,
+        subject,
+        html: html.substring(0, 200) + '...' // Log first 200 chars
+      });
+    }
+
     return false;
   }
 }
