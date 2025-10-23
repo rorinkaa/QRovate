@@ -62,6 +62,6 @@ app.use('/billing', billingRoutes);
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, '0.0.0.0', () => {
+app.listen(PORT, process.env.NODE_ENV === 'production' ? '0.0.0.0' : 'localhost', () => {
   console.log(`Backend running on ${resolveBaseUrl()}`);
 });
