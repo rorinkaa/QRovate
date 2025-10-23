@@ -1,55 +1,28 @@
 import dotenv from 'dotenv';
 dotenv.config({ override: true });
 
-import nodemailer from 'nodemailer';
-
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = process.env.SMTP_PORT || 587;
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const FROM_EMAIL = process.env.FROM_EMAIL || SMTP_USER;
-
-let transporter = null;
-
-function getTransporter() {
-  if (!transporter) {
-    transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_PORT == 465, // true for 465, false for other ports
-      auth: SMTP_USER && SMTP_PASS ? {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
-      } : undefined,
-      // Add timeout and connection settings
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 10000, // 10 seconds
-      socketTimeout: 30000, // 30 seconds
-    });
-  }
-  return transporter;
-}
+import sgMail from '@sendgrid/mail';
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 export async function sendEmail(to, subject, html) {
-  if (!SMTP_USER || !SMTP_PASS) {
-    console.warn('SMTP not configured, skipping email send');
-    console.log('DEVELOPMENT MODE - Email would be sent to:', to, 'Subject:', subject);
-    return true; // Return true in dev mode to not break functionality
-  }
+  const msg = {
+    to,
+    from: {
+      email: process.env.FROM_EMAIL,
+      name: process.env.FROM_NAME
+    },
+    subject,
+    html
+  };
 
   try {
-    const info = await getTransporter().sendMail({
-      from: FROM_EMAIL,
-      to,
-      subject,
-      html,
-    });
-    console.log('Email sent:', info.messageId);
+    await sgMail.send(msg);
+    console.log('✅ Email sent to', to);
     return true;
-  } catch (error) {
-    console.error('Email send error:', error);
+  } catch (err) {
+    console.error('❌ SendGrid error:', err.response?.body || err.message);
 
-    // In production, if SMTP fails, log the email content for manual sending
+    // In production, if SendGrid fails, log the email content for manual sending
     if (process.env.NODE_ENV === 'production') {
       console.log('PRODUCTION EMAIL FAILURE - Manual sending required:');
       console.log('To:', to);

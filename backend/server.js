@@ -22,7 +22,8 @@ console.log('PORT:', process.env.PORT);
 console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
 console.log('SMTP_HOST:', process.env.SMTP_HOST);
 console.log('SMTP_USER:', process.env.SMTP_USER ? 'SET' : 'NOT SET');
-console.log('SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
+console.log('SMTP_PASS:', process.env.SMTP_PASS ? 'SET (API KEY)' : 'NOT SET');
+console.log('FROM_EMAIL:', process.env.FROM_EMAIL);
 console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
 console.log('RECAPTCHA_SECRET:', process.env.RECAPTCHA_SECRET ? 'SET' : 'NOT SET');
 
