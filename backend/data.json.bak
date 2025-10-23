@@ -32,6 +32,15 @@
       "stripeCustomerId": null,
       "stripeSubId": null,
       "emailVerified": false
+    },
+    "testuser@example.com": {
+      "password": null,
+      "passwordHash": "$2b$12$iYK12OMk85nl7Hr/IWCwK.zPAG7AdAWZ8haAdGquGFK2lSRLLPk0.",
+      "isPro": false,
+      "trialEnds": 1761800348765,
+      "stripeCustomerId": null,
+      "stripeSubId": null,
+      "emailVerified": false
     }
   },
   "qrs": {
@@ -271,13 +280,13 @@
       "email": "test@pro.com",
       "expiresAt": 1761256029786
     },
-    "b64a1f1be6672a81359f5060815bbb0a8903f64b4b4a97dd7af926dc017a2b8d": {
-      "email": "vas.veronika5@gmail.com",
-      "expiresAt": 1761281202480
-    },
     "bb8f49e0946203b0317a12231c0b96c99f1ae114f9d30c5d2dad9cd2b2e41ba6": {
       "email": "roroshalqlq@gmail.com",
       "expiresAt": 1761281653527
+    },
+    "bdacc0c565497bb21b29ca53d089ec09908b2dbd6106b311690d8d558c33bafe": {
+      "email": "vas.veronika5@gmail.com",
+      "expiresAt": 1761281675560
     }
   },
   "staticDesigns": {

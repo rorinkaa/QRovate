@@ -12,6 +12,9 @@ import { resolveBaseUrl } from './ip.js';
 
 const app = express();
 
+// Trust proxy for rate limiting
+app.set('trust proxy', 1);
+
 // Security middleware
 app.disable('x-powered-by');
 app.use(helmet({
