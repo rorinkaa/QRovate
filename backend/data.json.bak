@@ -23,6 +23,15 @@
       "stripeCustomerId": null,
       "stripeSubId": null,
       "emailVerified": false
+    },
+    "roroshalqlq@gmail.com": {
+      "password": null,
+      "passwordHash": "$2b$12$CkWvmZhE.vbAEVs9CV0VHOMnHJGGPnAJ3179S8f3NCtr.BSDLxCY.",
+      "isPro": false,
+      "trialEnds": 1761800005195,
+      "stripeCustomerId": null,
+      "stripeSubId": null,
+      "emailVerified": false
     }
   },
   "qrs": {
@@ -251,16 +260,24 @@
     "40a1dee11fccb700bd47e695b5c1e08fe093d7607cb8cea8a61bfa2669f2bbee": {
       "email": "test@pro.com",
       "expiresAt": 1761343091347
+    },
+    "8007d5e172ec38e7569283aff21fffead5da368c29dca30014a95e39873ff738": {
+      "email": "roroshalqlq@gmail.com",
+      "expiresAt": 1761368005197
     }
   },
   "resetTokens": {
-    "5e7ebc8a911d2267fcd435613b6f70cc22528d9a3fec741277dc6c04a73589a2": {
-      "email": "vas.veronika5@gmail.com",
-      "expiresAt": 1761254830786
-    },
     "3165df4cae95fc1df5359923b8ae64ae15ed313b756cf84372b6455ee5610835": {
       "email": "test@pro.com",
       "expiresAt": 1761256029786
+    },
+    "b64a1f1be6672a81359f5060815bbb0a8903f64b4b4a97dd7af926dc017a2b8d": {
+      "email": "vas.veronika5@gmail.com",
+      "expiresAt": 1761281202480
+    },
+    "bb8f49e0946203b0317a12231c0b96c99f1ae114f9d30c5d2dad9cd2b2e41ba6": {
+      "email": "roroshalqlq@gmail.com",
+      "expiresAt": 1761281653527
     }
   },
   "staticDesigns": {
