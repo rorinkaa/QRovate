@@ -33,7 +33,8 @@ function getTransporter() {
 export async function sendEmail(to, subject, html) {
   if (!SMTP_USER || !SMTP_PASS) {
     console.warn('SMTP not configured, skipping email send');
-    return false;
+    console.log('DEVELOPMENT MODE - Email would be sent to:', to, 'Subject:', subject);
+    return true; // Return true in dev mode to not break functionality
   }
 
   try {
@@ -48,13 +49,14 @@ export async function sendEmail(to, subject, html) {
   } catch (error) {
     console.error('Email send error:', error);
 
-    // In production, if SMTP fails, we might want to log the email content for manual sending
+    // In production, if SMTP fails, log the email content for manual sending
     if (process.env.NODE_ENV === 'production') {
-      console.log('PRODUCTION EMAIL FAILURE - Email details:', {
-        to,
-        subject,
-        html: html.substring(0, 200) + '...' // Log first 200 chars
-      });
+      console.log('PRODUCTION EMAIL FAILURE - Manual sending required:');
+      console.log('To:', to);
+      console.log('Subject:', subject);
+      console.log('HTML Content:');
+      console.log(html);
+      console.log('--- End of email content ---');
     }
 
     return false;

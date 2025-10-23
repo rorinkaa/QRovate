@@ -59,6 +59,15 @@
       "stripeCustomerId": null,
       "stripeSubId": null,
       "emailVerified": false
+    },
+    "devtest@example.com": {
+      "password": null,
+      "passwordHash": "$2b$12$PnLYLHU7rKEt9dNg5MGBrOH0aUsGqhJB4HxFQDAfHJojDio0nx8Je",
+      "isPro": false,
+      "trialEnds": 1761802720487,
+      "stripeCustomerId": null,
+      "stripeSubId": null,
+      "emailVerified": false
     }
   },
   "qrs": {
@@ -299,6 +308,10 @@
     "0646f39af68aad42f11d75cee839dedc5e0aa8b3f59930437e5456b15d947a33": {
       "email": "timeouttest@example.com",
       "expiresAt": 1761368434482
+    },
+    "ec10b0a828dbfe29ba0de80d2616bc35ce58158a2d8b93cac8cb7e4f755c3372": {
+      "email": "finaltest@example.com",
+      "expiresAt": 1761369151721
     }
   },
   "resetTokens": {
