@@ -235,7 +235,10 @@ router.post('/password/forgot', async (req, res) => {
   if (token) {
     logDevLink('reset', normEmail, token);
     // Send password reset email
-    await sendPasswordResetEmail(normEmail, token, FRONTEND_URL);
+    const emailSent = await sendPasswordResetEmail(normEmail, token, process.env.FRONTEND_URL || 'https://qrovate-fe.vercel.app');
+    if (!emailSent && process.env.NODE_ENV === 'production') {
+      console.log('PASSWORD RESET EMAIL FAILED - Manual reset link:', `${process.env.FRONTEND_URL || 'https://qrovate-fe.vercel.app'}/?reset=${token}`);
+    }
   }
   res.json({ ok: true });
 });

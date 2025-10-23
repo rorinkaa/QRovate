@@ -15,6 +15,17 @@ const app = express();
 // Trust proxy for rate limiting
 app.set('trust proxy', 1);
 
+// Log environment variables for debugging (remove in production)
+console.log('Environment check:');
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('PORT:', process.env.PORT);
+console.log('FRONTEND_URL:', process.env.FRONTEND_URL);
+console.log('SMTP_HOST:', process.env.SMTP_HOST);
+console.log('SMTP_USER:', process.env.SMTP_USER ? 'SET' : 'NOT SET');
+console.log('SMTP_PASS:', process.env.SMTP_PASS ? 'SET' : 'NOT SET');
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
+console.log('RECAPTCHA_SECRET:', process.env.RECAPTCHA_SECRET ? 'SET' : 'NOT SET');
+
 // Security middleware
 app.disable('x-powered-by');
 app.use(helmet({
