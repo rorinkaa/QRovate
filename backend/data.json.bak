@@ -414,6 +414,68 @@
     "mh64or89izv19z": {
       "owner": "test@pro.com",
       "name": "New dynamic QR",
+      "target": "http://localhost:5173/payload.html?type=MP3&data=%7B%22fileUrl%22%3A%22http%3A%2F%2Flocalhost%3A4000%2Fuploads%2F1761387589527-wtqxzper6.mp3%22%2C%22fileName%22%3A%22cascade-breathe-future-garage-412839.mp3%22%2C%22backgroundColor%22%3A%22%23f1f5f9%22%2C%22textColor%22%3A%22%23475569%22%2C%22accentColor%22%3A%22%232563eb%22%7D",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 6,
+      "blockedCount": 0,
+      "createdAt": 1761387580377,
+      "lastScanAt": 1761503178997,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761387580377
+        },
+        {
+          "type": "update",
+          "ts": 1761387598793
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761472276405
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761472284839
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761502963562
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761502968021
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761503170563
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761503178997
+        }
+      ]
+    },
+    "mh7ypr3gjm9g2f": {
+      "owner": "test@pro.com",
+      "name": "New dynamic QR",
       "target": "",
       "style": {
         "size": 320,
@@ -430,12 +492,124 @@
       },
       "scanCount": 0,
       "blockedCount": 0,
-      "createdAt": 1761387580377,
+      "createdAt": 1761498481516,
       "lastScanAt": null,
       "events": [
         {
           "type": "create",
-          "ts": 1761387580377
+          "ts": 1761498481516
+        }
+      ]
+    },
+    "mh7z5etscag5q7": {
+      "owner": "test@pro.com",
+      "name": "New dynamic QR",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 1,
+      "createdAt": 1761499212113,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761499212113
+        },
+        {
+          "type": "scan",
+          "ok": false,
+          "ts": 1761503159704
+        }
+      ]
+    },
+    "mh80u386568fyb": {
+      "owner": "test@pro.com",
+      "name": "New static QR",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 1,
+      "createdAt": 1761502043095,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761502043095
+        },
+        {
+          "type": "scan",
+          "ok": false,
+          "ts": 1761502960497
+        }
+      ]
+    },
+    "mh81jf3i0z5jks": {
+      "owner": "test@pro.com",
+      "name": "New dynamic QR",
+      "target": "http://localhost:5173/payload.html?type=PDF&data=%7B%22fileUrl%22%3A%22http%3A%2F%2Flocalhost%3A4000%2Fuploads%2F1761505654060-un9f6lmo0.pdf%22%2C%22fileName%22%3A%22free-cmyk-chart-printable-download-A4.pdf%22%2C%22backgroundColor%22%3A%22%23ffffff%22%2C%22textColor%22%3A%22%23000000%22%2C%22accentColor%22%3A%22%232563eb%22%2C%22title%22%3A%22%22%2C%22description%22%3A%22%22%2C%22version%22%3A%22%22%2C%22updatedAt%22%3A%22%22%2C%22fileSize%22%3A%22%22%2C%22thumbnailUrl%22%3A%22%22%2C%22tags%22%3A%22%22%2C%22notes%22%3A%22%22%7D",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 2,
+      "blockedCount": 0,
+      "createdAt": 1761503224878,
+      "lastScanAt": 1761505671127,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761503224878
+        },
+        {
+          "type": "update",
+          "ts": 1761503248018
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761503256139
+        },
+        {
+          "type": "update",
+          "ts": 1761505661992
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761505671127
         }
       ]
     }
