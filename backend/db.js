@@ -140,6 +140,14 @@ export function linkStripe(email, customerId, subId){
   if(subId) u.stripeSubId = subId;
   save(); return true;
 }
+
+export function getUserByStripeCustomer(customerId) {
+  if (!customerId) return null;
+  const entry = Object.entries(state.users).find(([, rec]) => rec.stripeCustomerId === customerId);
+  if (!entry) return null;
+  const [email, record] = entry;
+  return { email, ...record };
+}
 export function trialActive(email){
   const u = state.users[normalizeEmail(email)]; if(!u) return false;
   if(u.isPro) return true;
@@ -167,6 +175,13 @@ export function listQR(owner){
       createdAt: qr.createdAt,
       lastScanAt: qr.lastScanAt || null
     }));
+}
+
+export function countUserQRCodes(owner) {
+  const norm = normalizeEmail(owner);
+  return Object.values(state.qrs)
+    .filter(qr => normalizeEmail(qr.owner) === norm)
+    .length;
 }
 export function listStaticDesigns(owner){
   const norm = normalizeEmail(owner);

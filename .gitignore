@@ -1,9 +1,44 @@
-backend/node_modules
-backend/npm-debug.log*
-backend/yarn-debug.log*
+# General
+.DS_Store
+Thumbs.db
+
+# Environment files
 .env
-backend/data.json
-backend/.DS_Store
-backend/node_modules/.package-lock.json
-backend/node_modules/.package-lock.json
-/backend/node_modules
+*.env.local
+*.env.*.local
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build & cache artifacts
+dist/
+*/dist/
+build/
+*/build/
+.vite/
+*/.vite/
+coverage/
+*/coverage/
+.cache/
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# Backend local data & uploads
+backend/data.json*
+backend/uploads/
+backend/routes/uploads/
+
+# Prisma / database
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+
+# Editor settings
+.idea/
+.vscode/
+*.swp

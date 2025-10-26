@@ -1,0 +1,110 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String?
+  isPro           Boolean  @default(false)
+  trialEnds       DateTime?
+  stripeCustomerId String?
+  stripeSubId     String?
+  emailVerified   Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  qrCodes         QRCode[]
+  staticDesigns   StaticDesign[]
+  verificationTokens VerificationToken[]
+  resetTokens     ResetToken[]
+}
+
+model QRCode {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  name        String   @default("Untitled QR")
+  target      String
+  style       Json?
+  scanCount   Int      @default(0)
+  blockedCount Int     @default(0)
+  createdAt   DateTime @default(now())
+  lastScanAt  DateTime?
+  
+  // New features
+  password    String?  // Password protection
+  expiresAt   DateTime? // Expiration date
+  scheduledStart DateTime? // Scheduled redirect start
+  scheduledEnd   DateTime? // Scheduled redirect end
+  alternateTarget String? // Target after expiration/schedule
+  
+  events      Event[]
+}
+
+model Event {
+  id        String   @id @default(cuid())
+  qrCodeId  String
+  qrCode    QRCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+  type      String
+  data      Json?
+  timestamp DateTime @default(now())
+  
+  @@index([qrCodeId])
+  @@index([timestamp])
+}
+
+model StaticDesign {
+  id        String   @id @default(cuid())
+  ownerId   String
+  owner     User     @relation(fields: [ownerId], references: [id])
+  name      String
+  template  String?
+  values    Json?
+  style     Json?
+  payload   Json?
+  createdAt DateTime @default(now())
+  
+  @@index([ownerId])
+}
+
+model VerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([token])
+  @@index([userId])
+}
+
+model ResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([token])
+  @@index([userId])
+}
+
+model GuestQR {
+  id        String   @id @default(cuid())
+  target    String
+  style     Json?
+  name      String   @default("Guest QR")
+  createdAt DateTime @default(now())
+  
+  @@index([createdAt])
+}
+
+

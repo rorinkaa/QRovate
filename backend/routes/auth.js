@@ -1,38 +1,47 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import {
-  getUser,
-  addUser,
-  setPro,
-  trialDaysLeft,
-  setPasswordHash,
-  setEmailVerified,
-  createVerificationToken,
-  consumeVerificationToken,
-  createResetToken,
-  consumeResetToken
-  , updateUserProfile
-} from '../db.js';
+import * as db from '../db.js';
+import * as dbPrisma from '../db-prisma.js';
+
+// Use Prisma if available, fallback to old db
+const usePrisma = process.env.USE_PRISMA === 'true';
+const getUser = usePrisma ? dbPrisma.getUser : db.getUser;
+const addUser = usePrisma ? dbPrisma.addUser : db.addUser;
+const setPro = usePrisma ? dbPrisma.setPro : db.setPro;
+const trialDaysLeft = usePrisma ? dbPrisma.trialDaysLeft : db.trialDaysLeft;
+const setPasswordHash = usePrisma ? dbPrisma.setPasswordHash : db.setPasswordHash;
+const setEmailVerified = usePrisma ? dbPrisma.setEmailVerified : db.setEmailVerified;
+const createVerificationToken = usePrisma ? dbPrisma.createVerificationToken : db.createVerificationToken;
+const consumeVerificationToken = usePrisma ? dbPrisma.consumeVerificationToken : db.consumeVerificationToken;
+const createResetToken = usePrisma ? dbPrisma.createResetToken : db.createResetToken;
+const consumeResetToken = usePrisma ? dbPrisma.consumeResetToken : db.consumeResetToken;
+const updateUserProfile = usePrisma ? dbPrisma.updateUserProfile : db.updateUserProfile;
+const countUserQRCodes = usePrisma ? dbPrisma.countUserQRCodes : db.countUserQRCodes;
 import { sendPasswordResetEmail, sendVerificationEmail } from '../email.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-this';
 const RECAPTCHA_SECRET = process.env.RECAPTCHA_SECRET || '';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FREE_PLAN_DYNAMIC_LIMIT = Number(process.env.FREE_PLAN_DYNAMIC_LIMIT || 1);
 
 function normalizeEmail(e){
   return (e || '').toString().trim().toLowerCase();
 }
 
-function responseUser(email) {
+async function responseUser(email) {
   const norm = normalizeEmail(email);
-  const profile = getUser(norm);
+  const profile = await getUser(norm);
+  const daysLeft = await trialDaysLeft(norm);
+  const dynamicCount = await countUserQRCodes(norm);
   return {
     email: norm,
     is_pro: !!profile?.isPro,
-    trial_days_left: trialDaysLeft(norm),
-    email_verified: !!profile?.emailVerified
+    trial_days_left: daysLeft,
+    email_verified: !!profile?.emailVerified,
+    dynamic_count: dynamicCount,
+    free_plan_dynamic_limit: FREE_PLAN_DYNAMIC_LIMIT
   };
 }
 
@@ -97,13 +106,13 @@ router.post('/login', async (req, res) => {
   // if (!await ensureCaptcha(req, captchaToken)) {
   //   return res.status(400).json({ error: 'Captcha validation failed', code: 'BAD_CAPTCHA' });
   // }
-  const u = getUser(normEmail);
+  const u = await getUser(normEmail);
   if (!u) return res.status(401).json({ error: 'Invalid credentials' });
 
   // migrate plain password if exists
   if (u.password && !u.passwordHash && u.password === password) {
     const hash = bcrypt.hashSync(password, 12);
-    setPasswordHash(email, hash);
+    await setPasswordHash(email, hash);
     delete u.password;
   }
   if (!u.passwordHash || !bcrypt.compareSync(password, u.passwordHash))
@@ -111,9 +120,10 @@ router.post('/login', async (req, res) => {
 
   const token = signToken(normEmail);
   const needsVerification = !u.emailVerified;
+  const userData = await responseUser(normEmail);
   res.json({
     token,
-    user: { ...responseUser(normEmail), needs_verification: needsVerification }
+    user: { ...userData, needs_verification: needsVerification }
   });
 });
 
@@ -127,20 +137,21 @@ router.post('/register', async (req, res) => {
   // }
 
   const hash = bcrypt.hashSync(password, 12);
-  const ok = addUser(normEmail, undefined, hash);
+  const ok = await addUser(normEmail, undefined, hash);
   if (!ok) return res.status(400).json({ error: 'User exists' });
   // By default users are free accounts. 'pro' upgrade flows are handled separately.
 
-  const verifyToken = createVerificationToken(normEmail);
+  const verifyToken = await createVerificationToken(normEmail);
   if (verifyToken) {
     logDevLink('verify', normEmail, verifyToken);
     // Send verification email
     await sendVerificationEmail(normEmail, verifyToken, FRONTEND_URL);
   }
 
+  const userData = await responseUser(normEmail);
   res.status(201).json({
     requires_verification: true,
-    user: { ...responseUser(normEmail), email_verified: false },
+    user: { ...userData, email_verified: false },
     dev_verification_url: process.env.NODE_ENV === 'production' ? undefined : `${FRONTEND_URL}/?verify=${verifyToken}`
   });
 });
@@ -149,9 +160,10 @@ router.post('/register', async (req, res) => {
 router.get('/profile', async (req, res) => {
   const authed = authEmailFromRequest(req);
   if (!authed) return res.status(401).json({ error: 'Unauthorized' });
-  const user = getUser(authed);
+  const user = await getUser(authed);
   if (!user) return res.status(404).json({ error: 'Not found' });
-  res.json({ email: authed, is_pro: !!user.isPro, trial_days_left: trialDaysLeft(authed), email_verified: !!user.emailVerified });
+  const daysLeft = await trialDaysLeft(authed);
+  res.json({ email: authed, is_pro: !!user.isPro, trial_days_left: daysLeft, email_verified: !!user.emailVerified });
 });
 
 // Update simple profile fields (non-sensitive)
@@ -161,15 +173,15 @@ router.post('/profile', async (req, res) => {
   const { emailVerified } = req.body || {};
   const updates = {};
   if (typeof emailVerified === 'boolean') updates.emailVerified = emailVerified;
-  const ok = updateUserProfile ? updateUserProfile(authed, updates) : false;
+  const ok = updateUserProfile ? await updateUserProfile(authed, updates) : false;
   if (!ok) return res.status(400).json({ error: 'Failed to update' });
   res.json({ ok: true });
 });
 
-router.post('/upgrade', (req, res) => {
+router.post('/upgrade', async (req, res) => {
   const { email } = req.body || {};
   if (!email) return res.status(400).json({ error: 'email required' });
-  const ok = setPro(email, true);
+  const ok = await setPro(email, true);
   if (!ok) return res.status(404).json({ error: 'User not found' });
   res.json({ ok: true });
 });
@@ -185,11 +197,11 @@ router.post('/resend-verification', async (req, res) => {
   //   return res.status(400).json({ error: 'Captcha validation failed', code: 'BAD_CAPTCHA' });
   // }
 
-  const user = getUser(targetEmail);
+  const user = await getUser(targetEmail);
   if (!user) return res.json({ ok: true });
   if (user.emailVerified) return res.json({ ok: true });
 
-  const verifyToken = createVerificationToken(targetEmail);
+  const verifyToken = await createVerificationToken(targetEmail);
   if (verifyToken) {
     logDevLink('verify', targetEmail, verifyToken);
     // Send verification email
@@ -199,12 +211,12 @@ router.post('/resend-verification', async (req, res) => {
   res.json({ ok: true });
 });
 
-router.post('/verify', (req, res) => {
+router.post('/verify', async (req, res) => {
   const { token } = req.body || {};
   if (!token) return res.status(400).json({ error: 'Missing token' });
-  const email = consumeVerificationToken(token);
+  const email = await consumeVerificationToken(token);
   if (!email) return res.status(400).json({ error: 'Invalid or expired token', code: 'TOKEN_INVALID' });
-  setEmailVerified(email, true);
+  await setEmailVerified(email, true);
   res.json({ ok: true, email });
 });
 
@@ -229,9 +241,9 @@ router.post('/password/forgot', async (req, res) => {
   // if (!await ensureCaptcha(req, captchaToken)) {
   //   return res.status(400).json({ error: 'Captcha validation failed', code: 'BAD_CAPTCHA' });
   // }
-  const user = getUser(normEmail);
+  const user = await getUser(normEmail);
   if (!user) return res.json({ ok: true });
-  const token = createResetToken(normEmail);
+  const token = await createResetToken(normEmail);
   if (token) {
     logDevLink('reset', normEmail, token);
     // Send password reset email
@@ -246,11 +258,11 @@ router.post('/password/forgot', async (req, res) => {
 router.post('/password/reset', async (req, res) => {
   const { token, password } = req.body || {};
   if (!token || !password) return res.status(400).json({ error: 'Missing fields' });
-  const email = consumeResetToken(token);
+  const email = await consumeResetToken(token);
   if (!email) return res.status(400).json({ error: 'Invalid or expired token', code: 'TOKEN_INVALID' });
   const hash = bcrypt.hashSync(password, 12);
-  setPasswordHash(email, hash);
-  setEmailVerified(email, true);
+  await setPasswordHash(email, hash);
+  await setEmailVerified(email, true);
   res.json({ ok: true });
 });
 

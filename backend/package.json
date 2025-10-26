@@ -4,19 +4,27 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:seed": "node scripts/seed.js"
   },
   "dependencies": {
+    "@lemonsqueezy/lemonsqueezy.js": "^4.0.0",
+    "@prisma/client": "^5.22.0",
     "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "express-fileupload": "^1.5.2",
     "express-rate-limit": "^8.1.0",
+    "file-type": "^21.0.0",
+    "geoip-lite": "^1.4.10",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
     "qrcode": "^1.5.4",
-    "stripe": "^14.25.0"
+    "useragent": "^2.3.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
@@ -28,7 +36,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.9.1",
     "@types/qrcode": "^1.5.5",
-    "@types/stripe": "^8.0.416",
+    "prisma": "^5.22.0",
     "typescript": "^5.9.3"
   }
 }
