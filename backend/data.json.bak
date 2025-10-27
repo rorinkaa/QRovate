@@ -584,10 +584,10 @@
         "frameTextColor": "#0B1120",
         "logoSizeRatio": 0.22
       },
-      "scanCount": 2,
+      "scanCount": 3,
       "blockedCount": 0,
       "createdAt": 1761503224878,
-      "lastScanAt": 1761505671127,
+      "lastScanAt": 1761506331188,
       "events": [
         {
           "type": "create",
@@ -610,6 +610,95 @@
           "type": "scan",
           "ok": true,
           "ts": 1761505671127
+        },
+        {
+          "type": "scan",
+          "ok": true,
+          "ts": 1761506331188
+        }
+      ]
+    },
+    "mh9ejly27clylz": {
+      "owner": "test@pro.com",
+      "name": "New dynamic QR",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 0,
+      "createdAt": 1761585534938,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761585534938
+        }
+      ]
+    },
+    "mh9f8oo4ocm7gg": {
+      "owner": "test@pro.com",
+      "name": "New dynamic QR",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 0,
+      "createdAt": 1761586704868,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761586704868
+        }
+      ]
+    },
+    "mh9fopmlhk4e64": {
+      "owner": "test@pro.com",
+      "name": "New dynamic QR",
+      "target": "",
+      "style": {
+        "size": 320,
+        "colorMode": "solid",
+        "foreground": "#0B1120",
+        "foregroundSecondary": "#2563EB",
+        "gradientAngle": 45,
+        "background": "#F8FAFC",
+        "frameStyle": "none",
+        "frameColor": "#FFFFFF",
+        "frameText": "SCAN ME",
+        "frameTextColor": "#0B1120",
+        "logoSizeRatio": 0.22
+      },
+      "scanCount": 0,
+      "blockedCount": 0,
+      "createdAt": 1761587452605,
+      "lastScanAt": null,
+      "events": [
+        {
+          "type": "create",
+          "ts": 1761587452605
         }
       ]
     }
